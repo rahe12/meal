@@ -1,0 +1,30 @@
+{
+  "name": "tuma-meal-api",
+  "version": "1.0.0",
+  "description": "Node.js REST API for Tuma Meal Mobile App with user registration, login, menu and order features.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "express",
+    "postgresql",
+    "meal-ordering",
+    "mobile-api",
+    "tuma"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
