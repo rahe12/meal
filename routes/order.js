@@ -2,7 +2,360 @@ const express = require('express');
 const pool = require('../db');
 const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
+// Create a new meal (Admin only)
+router.post('/meals', authenticateToken, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (!req.user.is_admin) {
+            return res.status(403).json({ 
+                success: false,
+                error: 'Admin access required' 
+            });
+        }
 
+        const {
+            name,
+            description,
+            price,
+            category,
+            image_url,
+            prep_time,
+            ingredients,
+            nutritional_info,
+            allergens,
+            is_available = true,
+            is_featured = false,
+            serving_size,
+            spice_level
+        } = req.body;
+
+        // Validate required fields
+        if (!name || !description || !price || !category) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: name, description, price, and category are required'
+            });
+        }
+
+        // Validate price
+        if (isNaN(price) || parseFloat(price) <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Price must be a positive number'
+            });
+        }
+
+        // Validate prep_time if provided
+        if (prep_time !== undefined && (isNaN(prep_time) || parseInt(prep_time) < 0)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prep time must be a non-negative number'
+            });
+        }
+
+        // Check if meal with same name already exists
+        const existingMeal = await pool.query(
+            'SELECT id FROM meals WHERE LOWER(name) = LOWER($1)',
+            [name]
+        );
+
+        if (existingMeal.rows.length > 0) {
+            return res.status(409).json({
+                success: false,
+                error: 'A meal with this name already exists'
+            });
+        }
+
+        // Insert new meal
+        const insertQuery = `
+            INSERT INTO meals (
+                name, description, price, category, image_url, prep_time,
+                ingredients, nutritional_info, allergens, is_available, 
+                is_featured, serving_size, spice_level, created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 
+                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            ) RETURNING *
+        `;
+
+        const result = await pool.query(insertQuery, [
+            name,
+            description,
+            parseFloat(price),
+            category,
+            image_url || null,
+            prep_time ? parseInt(prep_time) : 30, // Default 30 minutes
+            ingredients || null,
+            nutritional_info || null,
+            allergens || null,
+            Boolean(is_available),
+            Boolean(is_featured),
+            serving_size || null,
+            spice_level || null
+        ]);
+
+        const newMeal = result.rows[0];
+
+        res.status(201).json({
+            success: true,
+            message: 'Meal created successfully',
+            data: {
+                ...newMeal,
+                rating: '0.0',
+                review_count: 0
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating meal:', error);
+        
+        // Handle specific database errors
+        if (error.code === '23505') { // Unique constraint violation
+            return res.status(409).json({
+                success: false,
+                error: 'A meal with this name already exists'
+            });
+        }
+        
+        if (error.code === '23502') { // Not null constraint violation
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create meal'
+        });
+    }
+});
+
+// Update an existing meal (Admin only)
+router.put('/meals/:id', authenticateToken, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (!req.user.is_admin) {
+            return res.status(403).json({ 
+                success: false,
+                error: 'Admin access required' 
+            });
+        }
+
+        const { id } = req.params;
+        const {
+            name,
+            description,
+            price,
+            category,
+            image_url,
+            prep_time,
+            ingredients,
+            nutritional_info,
+            allergens,
+            is_available,
+            is_featured,
+            serving_size,
+            spice_level
+        } = req.body;
+
+        // Check if meal exists
+        const existingMeal = await pool.query(
+            'SELECT * FROM meals WHERE id = $1',
+            [id]
+        );
+
+        if (existingMeal.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Meal not found'
+            });
+        }
+
+        // Validate price if provided
+        if (price !== undefined && (isNaN(price) || parseFloat(price) <= 0)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Price must be a positive number'
+            });
+        }
+
+        // Validate prep_time if provided
+        if (prep_time !== undefined && (isNaN(prep_time) || parseInt(prep_time) < 0)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prep time must be a non-negative number'
+            });
+        }
+
+        // Check if another meal with same name exists (excluding current meal)
+        if (name) {
+            const nameCheck = await pool.query(
+                'SELECT id FROM meals WHERE LOWER(name) = LOWER($1) AND id != $2',
+                [name, id]
+            );
+
+            if (nameCheck.rows.length > 0) {
+                return res.status(409).json({
+                    success: false,
+                    error: 'A meal with this name already exists'
+                });
+            }
+        }
+
+        // Build update query dynamically
+        const updateFields = [];
+        const updateValues = [];
+        let paramCount = 0;
+
+        const fieldsToUpdate = {
+            name, description, price, category, image_url, prep_time,
+            ingredients, nutritional_info, allergens, is_available,
+            is_featured, serving_size, spice_level
+        };
+
+        Object.entries(fieldsToUpdate).forEach(([key, value]) => {
+            if (value !== undefined) {
+                paramCount++;
+                updateFields.push(`${key} = $${paramCount}`);
+                
+                if (key === 'price') {
+                    updateValues.push(parseFloat(value));
+                } else if (key === 'prep_time') {
+                    updateValues.push(parseInt(value));
+                } else if (key === 'is_available' || key === 'is_featured') {
+                    updateValues.push(Boolean(value));
+                } else {
+                    updateValues.push(value);
+                }
+            }
+        });
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No fields to update'
+            });
+        }
+
+        // Add updated_at field
+        paramCount++;
+        updateFields.push(`updated_at = $${paramCount}`);
+        updateValues.push(new Date());
+
+        // Add ID for WHERE clause
+        paramCount++;
+        updateValues.push(id);
+
+        const updateQuery = `
+            UPDATE meals 
+            SET ${updateFields.join(', ')}
+            WHERE id = $${paramCount}
+            RETURNING *
+        `;
+
+        const result = await pool.query(updateQuery, updateValues);
+
+        // Get updated meal with rating info
+        const mealWithRating = await pool.query(`
+            SELECT m.*, 
+                   COALESCE(AVG(r.rating), 0) as rating,
+                   COUNT(r.id) as review_count
+            FROM meals m
+            LEFT JOIN reviews r ON m.id = r.meal_id
+            WHERE m.id = $1
+            GROUP BY m.id
+        `, [id]);
+
+        res.json({
+            success: true,
+            message: 'Meal updated successfully',
+            data: {
+                ...mealWithRating.rows[0],
+                rating: parseFloat(mealWithRating.rows[0].rating).toFixed(1),
+                review_count: parseInt(mealWithRating.rows[0].review_count)
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating meal:', error);
+        
+        // Handle specific database errors
+        if (error.code === '23505') { // Unique constraint violation
+            return res.status(409).json({
+                success: false,
+                error: 'A meal with this name already exists'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update meal'
+        });
+    }
+});
+
+// Delete a meal (Admin only)
+router.delete('/meals/:id', authenticateToken, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (!req.user.is_admin) {
+            return res.status(403).json({ 
+                success: false,
+                error: 'Admin access required' 
+            });
+        }
+
+        const { id } = req.params;
+
+        // Check if meal exists
+        const existingMeal = await pool.query(
+            'SELECT * FROM meals WHERE id = $1',
+            [id]
+        );
+
+        if (existingMeal.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Meal not found'
+            });
+        }
+
+        // Check if meal has any orders (optional - you might want to prevent deletion)
+        const orderCheck = await pool.query(
+            'SELECT COUNT(*) as count FROM order_items WHERE meal_id = $1',
+            [id]
+        );
+
+        if (parseInt(orderCheck.rows[0].count) > 0) {
+            // Instead of deleting, mark as unavailable
+            await pool.query(
+                'UPDATE meals SET is_available = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+                [id]
+            );
+
+            return res.json({
+                success: true,
+                message: 'Meal marked as unavailable due to existing orders'
+            });
+        }
+
+        // Delete the meal (this will cascade delete reviews due to foreign key)
+        await pool.query('DELETE FROM meals WHERE id = $1', [id]);
+
+        res.json({
+            success: true,
+            message: 'Meal deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Error deleting meal:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete meal'
+        });
+    }
+});
 // Get Menu with pagination, search, and filtering
 router.get('/meals', async (req, res) => {
     try {
