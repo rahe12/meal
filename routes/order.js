@@ -506,5 +506,145 @@ router.get('/meals/search/suggestions', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch suggestions' });
     }
 });
+// Get meals by category
+router.get('/meals/category/:category', async (req, res) => {
+    try {
+        const { category } = req.params;
+        const {
+            page = 1,
+            limit = 20,
+            sortBy = 'name',
+            sortOrder = 'ASC',
+            minPrice,
+            maxPrice,
+            minRating
+        } = req.query;
+
+        const offset = (page - 1) * limit;
+        
+        let query = `
+            SELECT m.*, 
+                   COALESCE(AVG(r.rating), 0) as rating,
+                   COUNT(r.id) as review_count
+            FROM meals m
+            LEFT JOIN reviews r ON m.id = r.meal_id
+            WHERE m.is_available = true AND m.category = $1
+        `;
+        
+        const queryParams = [category];
+        let paramCount = 1;
+
+        // Add additional filters
+        if (minPrice) {
+            paramCount++;
+            query += ` AND m.price >= $${paramCount}`;
+            queryParams.push(parseFloat(minPrice));
+        }
+
+        if (maxPrice) {
+            paramCount++;
+            query += ` AND m.price <= $${paramCount}`;
+            queryParams.push(parseFloat(maxPrice));
+        }
+
+        query += ` GROUP BY m.id`;
+
+        if (minRating) {
+            query += ` HAVING COALESCE(AVG(r.rating), 0) >= ${parseFloat(minRating)}`;
+        }
+
+        // Add sorting
+        const validSortFields = ['name', 'price', 'rating', 'created_at', 'prep_time'];
+        const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+        const order = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        
+        if (sortBy === 'rating') {
+            query += ` ORDER BY rating ${order}, m.name ASC`;
+        } else {
+            query += ` ORDER BY m.${sortField} ${order}`;
+        }
+
+        // Add pagination
+        paramCount++;
+        query += ` LIMIT $${paramCount}`;
+        queryParams.push(parseInt(limit));
+
+        paramCount++;
+        query += ` OFFSET $${paramCount}`;
+        queryParams.push(offset);
+
+        const result = await pool.query(query, queryParams);
+
+        // Get total count for pagination
+        let countQuery = `
+            SELECT COUNT(DISTINCT m.id) as total
+            FROM meals m
+            LEFT JOIN reviews r ON m.id = r.meal_id
+            WHERE m.is_available = true AND m.category = $1
+        `;
+        
+        const countParams = [category];
+        let countParamIndex = 1;
+
+        if (minPrice) {
+            countParamIndex++;
+            countQuery += ` AND m.price >= $${countParamIndex}`;
+            countParams.push(parseFloat(minPrice));
+        }
+
+        if (maxPrice) {
+            countParamIndex++;
+            countQuery += ` AND m.price <= $${countParamIndex}`;
+            countParams.push(parseFloat(maxPrice));
+        }
+
+        const countResult = await pool.query(countQuery, countParams);
+        const totalCount = parseInt(countResult.rows[0].total);
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // Check if category exists
+        if (result.rows.length === 0 && page === 1) {
+            // Verify if category exists at all
+            const categoryCheck = await pool.query(
+                'SELECT COUNT(*) as count FROM meals WHERE category = $1 AND is_available = true',
+                [category]
+            );
+            
+            if (parseInt(categoryCheck.rows[0].count) === 0) {
+                return res.status(404).json({ 
+                    success: false,
+                    message: 'Category not found or no meals available in this category',
+                    data: []
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Meals retrieved successfully',
+            data: result.rows.map(meal => ({
+                ...meal,
+                rating: parseFloat(meal.rating).toFixed(1),
+                review_count: parseInt(meal.review_count)
+            })),
+            pagination: {
+                totalCount,
+                page: parseInt(page),
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                limit: parseInt(limit)
+            },
+            category: category
+        });
+    } catch (error) {
+        console.error('Error fetching meals by category:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch meals by category',
+            data: []
+        });
+    }
+});
 
 module.exports = router;
