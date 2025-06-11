@@ -2,7 +2,6 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
-const validator = require('validator');
 const rateLimit = require('express-rate-limit');
 const authenticateToken = require('../middleware/auth');
 const router = express.Router();
@@ -15,6 +14,9 @@ const loginLimiter = rateLimit({
     message: { error: 'Too many login attempts. Try again later.' }
 });
 
+// Email format validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Register
 router.post('/register', async (req, res) => {
     const { name, email, password, is_admin = false } = req.body;
@@ -25,7 +27,7 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Name, email, and password are required' });
         }
 
-        if (!validator.isEmail(email)) {
+        if (!emailRegex.test(email)) {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 
