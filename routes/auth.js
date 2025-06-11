@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const rateLimit = require('express-rate-limit');
-const authenticateToken = require('../middleware/auth');
+const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 require('dotenv').config();
 
