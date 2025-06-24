@@ -23,7 +23,7 @@ async function initializeDatabase() {
         session_id VARCHAR(255) UNIQUE NOT NULL,
         phone_number VARCHAR(20) NOT NULL,
         current_state VARCHAR(50) NOT NULL,
-        language VARCHAR(20) DEFAULT 'french',
+        language VARCHAR(20) DEFAULT 'english',
         status VARCHAR(20) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -62,7 +62,7 @@ async function initializeDatabase() {
 }
 
 // Database helper functions
-async function createOrUpdateSession(sessionId, phoneNumber, state, language = 'french', status = 'active') {
+async function createOrUpdateSession(sessionId, phoneNumber, state, language = 'english', status = 'active') {
   try {
     const query = `
       INSERT INTO ussd_sessions (session_id, phone_number, current_state, language, status, updated_at)
@@ -146,33 +146,14 @@ async function cleanupOldSessions() {
 
 // Constants for messages
 const MESSAGES = {
-  french: {
-    WELCOME: "CON Bienvenue à la Calculatrice IMC / Murakaza neza kuri BMI Calculator\nVeuillez sélectionner la langue / Hitamo ururimi\n1. Français\n2. Kinyarwanda\n3. English",
-    ENTER_AGE: "CON Entrez votre âge (ex., 25) :\n0. Retour au menu principal\n00. Quitter\n\nChoisissez un numéro :",
-    ENTER_WEIGHT: "CON Entrez votre poids en kilogrammes (ex., 70) :\n0. Retour\n00. Quitter\n\nChoisissez un numéro :",
-    ENTER_HEIGHT: "CON Entrez votre taille en centimètres (ex., 170) :\n0. Retour\n00. Quitter\n\nChoisissez un numéro :",
-    BMI_RESULT: "CON Votre IMC est %s\nCatégorie : %s\n1. Conseils de santé\n2. Voir historique\n0. Nouveau calcul\n00. Quitter\n\nChoisissez un numéro :",
-    HEALTH_TIPS: {
-      underweight: "CON Conseils : Mangez des aliments riches en nutriments, augmentez l'apport calorique, consultez un diététicien.\n0. Retour\n00. Quitter\n\nChoisissez un numéro :",
-      normal: "CON Conseils : Maintenez une alimentation équilibrée, faites de l'exercice régulièrement, restez hydraté.\n0. Retour\n00. Quitter\n\nChoisissez un numéro :",
-      overweight: "CON Conseils : Réduisez l'apport calorique, augmentez l'activité physique, consultez un médecin.\n0. Retour\n00. Quitter\n\nChoisissez un numéro :",
-      obese: "CON Conseils : Consultez un médecin, adoptez une alimentation saine, faites de l'exercice sous supervision.\n0. Retour\n00. Quitter\n\nChoisissez un numéro :"
-    },
-    INVALID: "END Entrée invalide. Veuillez réessayer.",
-    INVALID_CHOICE: "END Choix invalide. Veuillez réessayer.",
-    ERROR: "END Le système est en maintenance. Veuillez réessayer plus tard.",
-    HISTORY: "CON Historique de vos 3 derniers calculs IMC :\n%s\n0. Retour\n00. Quitter\n\nChoisissez un numéro :",
-    GOODBYE: "END Merci d'avoir utilisé la Calculatrice IMC. À bientôt!",
-    SESSION_ENDED: "END Session terminée. Merci!"
-  },
   kinyarwanda: {
-    WELCOME: "CON Murakaza neza kuri BMI Calculator\nHitamo ururimi\n1. Français\n2. Kinyarwanda\n3. English",
+    WELCOME: "CON Murakaza neza kuri BMI Calculator\nHitamo ururimi\n1. Kinyarwanda\n2. English",
     ENTER_AGE: "CON Injiza imyaka yawe (urugero, 25) :\n0. Subira ku menu\n00. Sohoka\n\nHitamo nimero :",
     ENTER_WEIGHT: "CON Injiza ibiro byawe muri kilogarama (urugero, 70) :\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
     ENTER_HEIGHT: "CON Injiza uburebure bwawe muri santimetero (urugero, 170) :\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
     BMI_RESULT: "CON BMI yawe ni %s\nIcyiciro : %s\n1. Inama z'ubuzima\n2. Reba amateka\n0. Kubara ubundi\n00. Sohoka\n\nHitamo nimero :",
     HEALTH_TIPS: {
-      underweight: "CON Inama : Fata ibiryo biryoshye, ongeramo kalori, wasanga umuganga w'imirire.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+      underweight: "CON Inama : Fata ibiryo biry about, ongeramo kalori, wasanga umuganga w'imirire.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
       normal: "CON Inama : Komeza kurya ibiryo biringanije, korikora imyirambere, unywe amazi ahagije.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
       overweight: "CON Inama : Gukuramo kalori, ongeramo imyirambere, wasanga umuganga.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
       obese: "CON Inama : Sura umuganga, tangira kurya ibiryo by'ubuzima, korikora imyirambere ufashijwe.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :"
@@ -185,7 +166,7 @@ const MESSAGES = {
     SESSION_ENDED: "END Igihe kirangiye. Murakoze!"
   },
   english: {
-    WELCOME: "CON Welcome to the BMI Calculator\nPlease select a language:\n1. French\n2. Kinyarwanda\n3. English",
+    WELCOME: "CON Welcome to the BMI Calculator\nPlease select a language:\n1. Kinyarwanda\n2. English",
     ENTER_AGE: "CON Enter your age (e.g., 25):\n0. Back to main menu\n00. Exit\n\nChoose a number:",
     ENTER_WEIGHT: "CON Enter your weight in kilograms (e.g., 70):\n0. Back\n00. Exit\n\nChoose a number:",
     ENTER_HEIGHT: "CON Enter your height in centimeters (e.g., 170):\n0. Back\n00. Exit\n\nChoose a number:",
@@ -247,7 +228,7 @@ const server = http.createServer((req, res) => {
       } catch (error) {
         console.error('Unhandled system error:', error);
         res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end(MESSAGES.french.ERROR);
+        res.end(MESSAGES.english.ERROR);
       }
     });
   } else if (req.method === 'GET' && req.url === '/shutdown') {
@@ -272,7 +253,7 @@ function initializeSession(sessionId, phoneNumber) {
     sessionId,
     phoneNumber,
     state: STATES.WELCOME,
-    language: 'french',
+    language: 'english',
     age: null,
     weight: null,
     height: null,
@@ -320,7 +301,7 @@ function goBackToPreviousState(session) {
 function clearDataForState(session, state) {
   switch (state) {
     case STATES.WELCOME:
-      session.language = 'french';
+      session.language = 'english';
       session.age = null;
       session.weight = null;
       session.height = null;
@@ -356,7 +337,374 @@ function clearDataForState(session, state) {
 function resetToWelcome(session) {
   session.state = STATES.WELCOME;
   session.navigationStack = [];
-  session.language = 'french';
+  session.language = 'english';
+  session.age = null;
+  session.weight = null;
+  session.height = null;
+  session.bmi = null;
+  session.category = null;
+  console.log(`Reset to WELCOME, Stack: ${JSON.stringify(session.navigationStack)}`);
+}
+
+function calculateBMI(weight, height) {
+  const heightM = height / 100;
+  const bmi = (weight / (heightM * heightM)).toFixed(1);
+  
+  let category;
+  if (bmi < 18"一、System: The error message you provided seems incomplete or unrelated to the code, as it mentions "Mosca to the Internet Archive," which does not appear in the context of the USSD BMI Calculator application. This suggests that the error message might have been accidentally included or is from a different context. Since you requested the full code with French removed and did not provide a new error message related to the updated code, I will assume you want the corrected code to run without the previous syntax error (caused by `NOT NOT NULL` in the `bmi_results` table creation) and with French language support removed.
+
+Below is the complete, updated `server.js` code with French language support removed, supporting only Kinyarwanda and English. The code has been modified to:
+- Remove all French-related messages from the `MESSAGES` object.
+- Update the language selection logic to offer only Kinyarwanda (`1`) and English (`2`).
+- Set English as the default language in `initializeSession`, `createOrUpdateSession`, and `clearDataForState`.
+- Update error and fallback messages to use English instead of French.
+- Remove French translations from the `getCategoryTranslation` function.
+- Adjust the welcome message to be bilingual (Kinyarwanda and English).
+- Fix the previous syntax error in the `bmi_results` table creation by correcting `NOT NOT NULL` to `NOT NULL`.
+
+### Complete Updated Code
+
+```javascript
+const http = require('http');
+const querystring = require('querystring');
+const { Pool } = require('pg');
+
+// Database configuration
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Your Neon database connection string
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 20, // Maximum number of connections in pool
+  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+  connectionTimeoutMillis: 2000 // Timeout after 2 seconds if connection fails
+});
+
+// Database initialization
+async function initializeDatabase() {
+  try {
+    // Create sessions table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ussd_sessions (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(255) UNIQUE NOT NULL,
+        phone_number VARCHAR(20) NOT NULL,
+        current_state VARCHAR(50) NOT NULL,
+        language VARCHAR(20) DEFAULT 'english',
+        status VARCHAR(20) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create BMI results table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bmi_results (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(255) NOT NULL,
+        phone_number VARCHAR(20) NOT NULL,
+        age INTEGER,
+        height DECIMAL(5,2) NOT NULL,
+        weight DECIMAL(5,2) NOT NULL,
+        bmi DECIMAL(4,1) NOT NULL,
+        category VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES ussd_sessions(session_id)
+      )
+    `);
+
+    // Create indexes for better performance
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_sessions_phone ON ussd_sessions(phone_number);
+      CREATE INDEX IF NOT EXISTS idx_sessions_session_id ON ussd_sessions(session_id);
+      CREATE INDEX IF NOT EXISTS idx_bmi_phone ON bmi_results(phone_number);
+      CREATE INDEX IF NOT EXISTS idx_bmi_session ON bmi_results(session_id);
+    `);
+
+    console.log('✅ Database tables initialized successfully');
+  } catch (error) {
+    console.error('❌ Database initialization error:', error);
+    throw error;
+  }
+}
+
+// Database helper functions
+async function createOrUpdateSession(sessionId, phoneNumber, state, language = 'english', status = 'active') {
+  try {
+    const query = `
+      INSERT INTO ussd_sessions (session_id, phone_number, current_state, language, status, updated_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      ON CONFLICT (session_id) 
+      DO UPDATE SET 
+        current_state = $3,
+        language = $4,
+        status = $5,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [sessionId, phoneNumber, state, language, status]);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error creating/updating session:', error);
+    throw error;
+  }
+}
+
+async function getSession(sessionId) {
+  try {
+    const query = 'SELECT * FROM ussd_sessions WHERE session_id = $1';
+    const result = await pool.query(query, [sessionId]);
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error getting session:', error);
+    throw error;
+  }
+}
+
+async function saveBMIResult(sessionId, phoneNumber, age, height, weight, bmi, category) {
+  try {
+    const query = `
+      INSERT INTO bmi_results (session_id, phone_number, age, height, weight, bmi, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [sessionId, phoneNumber, age, height, weight, bmi, category]);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error saving BMI result:', error);
+    throw error;
+  }
+}
+
+async function updateSessionStatus(sessionId, status) {
+  try {
+    const query = `
+      UPDATE ussd_sessions 
+      SET status = $2, updated_at = CURRENT_TIMESTAMP 
+      WHERE session_id = $1
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [sessionId, status]);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error updating session status:', error);
+    throw error;
+  }
+}
+
+// Cleanup old sessions (older than 30 minutes)
+async function cleanupOldSessions() {
+  try {
+    const query = `
+      UPDATE ussd_sessions 
+      SET status = 'expired' 
+      WHERE updated_at < NOW() - INTERVAL '30 minutes' 
+      AND status = 'active'
+    `;
+    
+    await pool.query(query);
+  } catch (error) {
+    console.error('Error cleaning up old sessions:', error);
+  }
+}
+
+// Constants for messages
+const MESSAGES = {
+  kinyarwanda: {
+    WELCOME: "CON Murakaza neza kuri BMI Calculator\nHitamo ururimi\n1. Kinyarwanda\n2. English",
+    ENTER_AGE: "CON Injiza imyaka yawe (urugero, 25) :\n0. Subira ku menu\n00. Sohoka\n\nHitamo nimero :",
+    ENTER_WEIGHT: "CON Injiza ibiro byawe muri kilogarama (urugero, 70) :\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+    ENTER_HEIGHT: "CON Injiza uburebure bwawe muri santimetero (urugero, 170) :\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+    BMI_RESULT: "CON BMI yawe ni %s\nIcyiciro : %s\n1. Inama z'ubuzima\n2. Reba amateka\n0. Kubara ubundi\n00. Sohoka\n\nHitamo nimero :",
+    HEALTH_TIPS: {
+      underweight: "CON Inama : Fata ibiryo biryoshye, ongeramo kalori, wasanga umuganga w'imirire.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+      normal: "CON Inama : Komeza kurya ibiryo biringanije, korikora imyirambere, unywe amazi ahagije.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+      overweight: "CON Inama : Gukuramo kalori, ongeramo imyirambere, wasanga umuganga.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+      obese: "CON Inama : Sura umuganga, tangira kurya ibiryo by'ubuzima, korikora imyirambere ufashijwe.\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :"
+    },
+    INVALID: "END Injiza nabi. Ongera ugerageze.",
+    INVALID_CHOICE: "END Guhitamo nabi. Ongera ugerageze.",
+    ERROR: "END Sisitemu iri mu bikorwa byo kuyisana. Ongera ugerageze nyuma.",
+    HISTORY: "CON Amateka ya BMI yawe y'ibyashize 3 :\n%s\n0. Subira inyuma\n00. Sohoka\n\nHitamo nimero :",
+    GOODBYE: "END Murakoze gukoresha BMI Calculator. Turabonana!",
+    SESSION_ENDED: "END Igihe kirangiye. Murakoze!"
+  },
+  english: {
+    WELCOME: "CON Welcome to the BMI Calculator\nPlease select a language:\n1. Kinyarwanda\n2. English",
+    ENTER_AGE: "CON Enter your age (e.g., 25):\n0. Back to main menu\n00. Exit\n\nChoose a number:",
+    ENTER_WEIGHT: "CON Enter your weight in kilograms (e.g., 70):\n0. Back\n00. Exit\n\nChoose a number:",
+    ENTER_HEIGHT: "CON Enter your height in centimeters (e.g., 170):\n0. Back\n00. Exit\n\nChoose a number:",
+    BMI_RESULT: "CON Your BMI is %s\nCategory: %s\n1. Health tips\n2. View history\n0. New calculation\n00. Exit\n\nChoose a number:",
+    HEALTH_TIPS: {
+      underweight: "CON Tips: Eat nutrient-rich foods, increase calorie intake, consult a dietitian.\n0. Back\n00. Exit\n\nChoose a number:",
+      normal: "CON Tips: Maintain a balanced diet, exercise regularly, stay hydrated.\n0. Back\n00. Exit\n\nChoose a number:",
+      overweight: "CON Tips: Reduce calorie intake, increase physical activity, consult a doctor.\n0. Back\n00. Exit\n\nChoose a number:",
+      obese: "CON Tips: Consult a doctor, adopt a healthy diet, exercise under supervision.\n0. Back\n00. Exit\n\nChoose a number:"
+    },
+    INVALID: "END Invalid input. Please try again.",
+    INVALID_CHOICE: "END Invalid choice. Please try again.",
+    ERROR: "END The system is under maintenance. Please try again later.",
+    HISTORY: "CON History of your last 3 BMI calculations:\n%s\n0. Back\n00. Exit\n\nChoose a number:",
+    GOODBYE: "END Thank you for using the BMI Calculator. Goodbye!",
+    SESSION_ENDED: "END Session ended. Thank you!"
+  }
+};
+
+// Navigation states
+const STATES = {
+  WELCOME: 'welcome',
+  AGE: 'age',
+  WEIGHT: 'weight',
+  HEIGHT: 'height',
+  RESULT: 'result',
+  TIPS: 'tips',
+  HISTORY: 'history'
+};
+
+// Session status constants
+const SESSION_STATUS = {
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+  TERMINATED: 'terminated',
+  EXPIRED: 'expired'
+};
+
+// In-memory session storage (for temporary data during session)
+const sessions = {};
+
+const server = http.createServer((req, res) => {
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', async () => {
+      try {
+        const parsedBody = querystring.parse(body);
+        const text = (parsedBody.text || '').trim();
+        const sessionId = parsedBody.sessionId || Date.now().toString();
+        const phoneNumber = parsedBody.phoneNumber || 'unknown';
+
+        console.log(`Received text: ${text}, Session ID: ${sessionId}, Phone: ${phoneNumber}`);
+
+        let response = await processUSSDFlow(text, sessionId, phoneNumber);
+
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(response);
+      } catch (error) {
+        console.error('Unhandled system error:', error);
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(MESSAGES.english.ERROR);
+      }
+    });
+  } else if (req.method === 'GET' && req.url === '/shutdown') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Shutting down server...');
+    console.log('Received shutdown request');
+    pool.end().then(() => {
+      console.log('Database connection closed');
+      server.close(() => {
+        console.log('Server shut down successfully');
+        process.exit(0);
+      });
+    });
+  } else {
+    res.writeHead(200);
+    res.end('USSD BMI Calculator service running with Neon Database.');
+  }
+});
+
+function initializeSession(sessionId, phoneNumber) {
+  return {
+    sessionId,
+    phoneNumber,
+    state: STATES.WELCOME,
+    language: 'english',
+    age: null,
+    weight: null,
+    height: null,
+    bmi: null,
+    category: null,
+    navigationStack: [],
+    lastActivity: Date.now()
+  };
+}
+
+function cleanupMemorySessions() {
+  const now = Date.now();
+  const THIRTY_MINUTES = 30 * 60 * 1000;
+  
+  for (const sid in sessions) {
+    if (now - sessions[sid].lastActivity > THIRTY_MINUTES) {
+      delete sessions[sid];
+    }
+  }
+}
+
+function pushToNavigationStack(session, state) {
+  if (session.state && session.state !== state) {
+    session.navigationStack.push(session.state);
+  }
+  session.state = state;
+  console.log(`Navigated to state: ${session.state}, Stack: ${JSON.stringify(session.navigationStack)}`);
+}
+
+function goBackToPreviousState(session) {
+  if (session.navigationStack.length > 0) {
+    const previousState = session.navigationStack.pop();
+    session.state = previousState;
+    
+    clearDataForState(session, previousState);
+    
+    console.log(`Navigated back to state: ${session.state}, Stack: ${JSON.stringify(session.navigationStack)}`);
+    return true;
+  } else {
+    resetToWelcome(session);
+    return false;
+  }
+}
+
+function clearDataForState(session, state) {
+  switch (state) {
+    case STATES.WELCOME:
+      session.language = 'english';
+      session.age = null;
+      session.weight = null;
+      session.height = null;
+      session.bmi = null;
+      session.category = null;
+      break;
+    case STATES.AGE:
+      session.age = null;
+      session.weight = null;
+      session.height = null;
+      session.bmi = null;
+      session.category = null;
+      break;
+    case STATES.WEIGHT:
+      session.weight = null;
+      session.height = null;
+      session.bmi = null;
+      session.category = null;
+      break;
+    case STATES.HEIGHT:
+      session.height = null;
+      session.bmi = null;
+      session.category = null;
+      break;
+    case STATES.RESULT:
+      break;
+    case STATES.TIPS:
+    case STATES.HISTORY:
+      break;
+  }
+}
+
+function resetToWelcome(session) {
+  session.state = STATES.WELCOME;
+  session.navigationStack = [];
+  session.language = 'english';
   session.age = null;
   session.weight = null;
   session.height = null;
@@ -385,12 +733,6 @@ function calculateBMI(weight, height) {
 
 function getCategoryTranslation(category, language) {
   const translations = {
-    french: {
-      underweight: 'Insuffisance pondérale',
-      normal: 'Normal',
-      overweight: 'Surpoids',
-      obese: 'Obésité'
-    },
     kinyarwanda: {
       underweight: 'Ibiro bike',
       normal: 'Bisanzwe',
@@ -431,7 +773,7 @@ function getStateResponse(session) {
   
   switch (session.state) {
     case STATES.WELCOME:
-      return MESSAGES.french.WELCOME; // Always show trilingual welcome
+      return MESSAGES.english.WELCOME; // Use English welcome for bilingual prompt
     case STATES.AGE:
       return MESSAGES[lang].ENTER_AGE;
     case STATES.WEIGHT:
@@ -454,7 +796,7 @@ function getStateResponse(session) {
   }
   
   resetToWelcome(session);
-  return MESSAGES.french.WELCOME;
+  return MESSAGES.english.WELCOME;
 }
 
 async function processUSSDFlow(text, sessionId, phoneNumber) {
@@ -477,7 +819,7 @@ async function processUSSDFlow(text, sessionId, phoneNumber) {
     if (!text || text === '') {
       resetToWelcome(session);
       await createOrUpdateSession(sessionId, phoneNumber, session.state, session.language, SESSION_STATUS.ACTIVE);
-      return MESSAGES.french.WELCOME;
+      return MESSAGES.english.WELCOME;
     }
     
     if (lastInput === '00') {
@@ -513,13 +855,13 @@ async function processUSSDFlow(text, sessionId, phoneNumber) {
         console.error(`Unknown state: ${session.state}`);
         resetToWelcome(session);
         await createOrUpdateSession(sessionId, phoneNumber, session.state, session.language, SESSION_STATUS.ACTIVE);
-        return MESSAGES.french.WELCOME;
+        return MESSAGES.english.WELCOME;
     }
   } catch (error) {
     console.error('Error in processUSSDFlow:', error);
     await updateSessionStatus(sessionId, SESSION_STATUS.TERMINATED);
     delete sessions[sessionId];
-    return MESSAGES.french.ERROR;
+    return MESSAGES.english.ERROR;
   }
 }
 
@@ -527,20 +869,14 @@ async function handleWelcomeState(session, input) {
   if (input === '0') {
     console.log('Staying at WELCOME state');
     await createOrUpdateSession(session.sessionId, session.phoneNumber, session.state, session.language, SESSION_STATUS.ACTIVE);
-    return MESSAGES.french.WELCOME;
+    return MESSAGES.english.WELCOME;
   } else if (input === '1') {
-    session.language = 'french';
-    pushToNavigationStack(session, STATES.AGE);
-    await createOrUpdateSession(session.sessionId, session.phoneNumber, session.state, session.language, SESSION_STATUS.ACTIVE);
-    console.log('Language selected: French');
-    return MESSAGES.french.ENTER_AGE;
-  } else if (input === '2') {
     session.language = 'kinyarwanda';
     pushToNavigationStack(session, STATES.AGE);
     await createOrUpdateSession(session.sessionId, session.phoneNumber, session.state, session.language, SESSION_STATUS.ACTIVE);
     console.log('Language selected: Kinyarwanda');
     return MESSAGES.kinyarwanda.ENTER_AGE;
-  } else if (input === '3') {
+  } else if (input === '2') {
     session.language = 'english';
     pushToNavigationStack(session, STATES.AGE);
     await createOrUpdateSession(session.sessionId, session.phoneNumber, session.state, session.language, SESSION_STATUS.ACTIVE);
@@ -550,7 +886,7 @@ async function handleWelcomeState(session, input) {
     console.log('Invalid language selection:', input);
     await updateSessionStatus(session.sessionId, SESSION_STATUS.TERMINATED);
     delete sessions[session.sessionId];
-    return MESSAGES.french.INVALID;
+    return MESSAGES.english.INVALID;
   }
 }
 
@@ -628,8 +964,8 @@ async function handleHeightState(session, input) {
       session.age, 
       session.height, 
       session.weight, 
-      bmi, 
-      category
+      session.bmi, 
+      session.category
     );
     
     pushToNavigationStack(session, STATES.RESULT);
@@ -673,7 +1009,7 @@ async function handleResultState(session, input) {
     let historyText = '';
     
     if (history.length === 0) {
-      historyText = lang === 'french' ? 'Aucun historique trouvé.' : lang === 'kinyarwanda' ? 'Nta mateka yaboneka.' : 'No history found.';
+      historyText = lang === 'kinyarwanda' ? 'Nta mateka yaboneka.' : 'No history found.';
     } else {
       history.forEach((record, index) => {
         const date = new Date(record.created_at).toLocaleDateString();
