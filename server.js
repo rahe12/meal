@@ -38,7 +38,7 @@ async function initializeDatabase() {
         phone_number VARCHAR(20) NOT NULL,
         age INTEGER,
         height DECIMAL(5,2) NOT NULL,
-        weight DECIMAL(5,2) NOT NOT NULL,
+        weight DECIMAL(5,2) NOT NULL,
         bmi DECIMAL(4,1) NOT NULL,
         category VARCHAR(50) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
